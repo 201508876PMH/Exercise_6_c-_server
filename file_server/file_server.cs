@@ -43,25 +43,25 @@ namespace tcp
 
 		    NetworkStream myNetworkStream = new NetworkStream(acceptSocket);
 
+		    while (true)
+		    {
+		        string ReceivedFilePath = LIB.readTextTCP(myNetworkStream);
 
-		    byte[] buf = new byte[255];
-		    int rec = myNetworkStream.Read(buf, 0, buf.Length);
-		    Array.Resize(ref buf, rec);
-		    string ReceivedFileName = Encoding.Default.GetString(buf);
+		        long fileSize = LIB.check_File_Exists(ReceivedFilePath);
+		        Console.WriteLine($"Received file path: {ReceivedFilePath}");
+		        Console.WriteLine($"Filesize: {fileSize}");
 
-            string fileName = LIB.extractFileName(ReceivedFileName);
-
-		    long fileSize = LIB.check_File_Exists(fileName);
-		    Console.WriteLine(fileName);
-		    Console.WriteLine(fileSize);
-
-		    if(fileSize == 0)
-            {
-                Console.WriteLine("Could not find file.");
+		        if (fileSize == 0)
+		        {
+		            Console.WriteLine("Could not find file.");
+		            LIB.writeTextTCP(myNetworkStream, "Error: Could not find file.");
+		        }
+		        else
+		        {
+		            sendFile(ReceivedFilePath, fileSize, myNetworkStream);
+		        }
             }
-            else
-		        sendFile(fileName, fileSize, myNetworkStream );
-
+            
             ourSocket.Close();
             acceptSocket.Close();
 		}
@@ -78,12 +78,28 @@ namespace tcp
 		/// <param name='io'>
 		/// Network stream for writing to the client.
 		/// </param>
-		private void sendFile (String fileName, long fileSize, NetworkStream io)
+		private void sendFile (String filePath, long fileSize, NetworkStream io)
 		{
-           
-                byte[] msgBuff = Encoding.Default.GetBytes(fileName);
-                string holderOfRequestedFile = LIB.extractFileName(fileName);
-                io.Write(msgBuff, 0, msgBuff.Length);
+		    LIB.writeTextTCP(io, fileSize.ToString());
+
+            System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
+		    byte[] fileBuf = System.IO.File.ReadAllBytes(filePath);
+
+		    int offset = 0;
+		    int size = 1000;
+
+		    while (offset < fileBuf.Length)
+		    {
+		        io.Write(fileBuf, offset, size);
+
+		        offset += 1000;
+
+		        if ((offset < fileBuf.Length) && (offset + 1000 > fileBuf.Length))
+		        {
+		            size = fileBuf.Length - offset;
+		        }
+		    }
+
         }
 
 		/// <summary>
