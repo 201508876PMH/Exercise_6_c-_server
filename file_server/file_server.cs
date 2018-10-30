@@ -113,7 +113,7 @@ namespace tcp
 		public static void Main (string[] args)
 		{
 			Console.WriteLine ("Server starts...");
-			new file_server();
+			file_server fs1 = new file_server();
 		    System.Console.ReadKey();
         }
 	}
