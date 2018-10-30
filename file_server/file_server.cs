@@ -49,7 +49,7 @@ namespace tcp
 
 		        long fileSize = LIB.check_File_Exists(ReceivedFilePath);
 		        Console.WriteLine($"Received file path: {ReceivedFilePath}");
-		        Console.WriteLine($"Filesize: {fileSize}");
+		        Console.WriteLine($"Filesize: {fileSize} bytes");
 
 		        if (fileSize == 0)
 		        {
@@ -82,24 +82,27 @@ namespace tcp
 		{
 		    LIB.writeTextTCP(io, fileSize.ToString());
 
-            System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
-		    byte[] fileBuf = System.IO.File.ReadAllBytes(filePath);
+            long length = new System.IO.FileInfo(filePath).Length;
+            FileStream fs = new FileStream(filePath, FileMode.Open);
 
-		    int offset = 0;
+		    byte[] fileBuf = new byte[1000];
+
+            int offset = 0;
 		    int size = 1000;
 
-		    while (offset < fileBuf.Length)
+            while (offset < length)
 		    {
-		        io.Write(fileBuf, offset, size);
+		        fs.Read(fileBuf, 0, size);
+                
+                io.Write(fileBuf, 0, size);
 
 		        offset += 1000;
 
-		        if ((offset < fileBuf.Length) && (offset + 1000 > fileBuf.Length))
+		        if ((offset < length) && (offset + 1000 > length))
 		        {
-		            size = fileBuf.Length - offset;
+		            size = (int)length - offset;
 		        }
 		    }
-
         }
 
 		/// <summary>
